@@ -1,0 +1,22 @@
+---
+global:
+  image:
+    tag: "v3.0.12"
+crds:
+  keep: false
+
+# It is preferable to use ingress and terminate TLS at the ingress controller rather than on the ArgoCD server itself.
+server:
+  service:
+    type: LoadBalancer
+  extraArgs:
+    - --insecure
+
+controller:
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi

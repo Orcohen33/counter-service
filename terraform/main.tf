@@ -216,3 +216,19 @@ resource "helm_release" "nginx_ingress" {
     value = "nlb"
   }
 }
+
+
+# Install ArgoCD
+resource "helm_release" "argocd" {
+  depends_on = [module.eks]
+
+  name             = "argocd"
+  repository       = "https://argoproj.github.io/argo-helm"
+  chart            = "argo-cd"
+  namespace        = "argocd"
+  create_namespace = true
+  version          = "8.2.7"
+  values = [
+    file("${path.module}/values/argocd-values.yaml")
+  ]
+}
