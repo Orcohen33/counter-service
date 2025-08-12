@@ -96,7 +96,8 @@ def counter():
 def ready():
     try:
         # Test Redis connection
-        redis_client.ping()
+        redis = get_redis_client()
+        redis.ping()
         return jsonify({"status": "ready"}), 200
     except Exception as e:
         return jsonify({"status": "not ready", "error": str(e)}), 503
