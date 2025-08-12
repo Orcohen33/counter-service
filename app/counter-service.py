@@ -94,54 +94,12 @@ def counter():
 
 @app.route("/ready")
 def ready():
-    """Enhanced readiness check - only ready if Redis is connected and working"""
     try:
-        client = get_redis_client()
-        if not client:
-            logger.error("Readiness check failed: No Redis client available")
-            return (
-                jsonify({"status": "not ready", "reason": "Redis client unavailable"}),
-                503,
-            )
-
-        # Test Redis connection with a simple operation
-        client.ping()
-
-        # Test actual Redis operations (read/write)
-        test_key = "readiness_test"
-        client.set(test_key, "ok", ex=30)  # Set with 30s expiration
-        result = client.get(test_key)
-
-        if result != "ok":
-            logger.error("Readiness check failed: Redis read/write test failed")
-            return (
-                jsonify({"status": "not ready", "reason": "Redis read/write failed"}),
-                503,
-            )
-
-        logger.info("Readiness check passed: Redis is fully operational")
+        # Test Redis connection
+        redis_client.ping()
         return jsonify({"status": "ready"}), 200
-
-    except redis.ConnectionError as e:
-        logger.error(f"Readiness check failed: Redis connection error: {e}")
-        return (
-            jsonify(
-                {"status": "not ready", "reason": f"Redis connection error: {str(e)}"}
-            ),
-            503,
-        )
-    except redis.TimeoutError as e:
-        logger.error(f"Readiness check failed: Redis timeout: {e}")
-        return (
-            jsonify({"status": "not ready", "reason": f"Redis timeout: {str(e)}"}),
-            503,
-        )
     except Exception as e:
-        logger.error(f"Readiness check failed: Unexpected error: {e}")
-        return (
-            jsonify({"status": "not ready", "reason": f"Unexpected error: {str(e)}"}),
-            503,
-        )
+        return jsonify({"status": "not ready", "error": str(e)}), 503
 
 
 @app.route("/health")
