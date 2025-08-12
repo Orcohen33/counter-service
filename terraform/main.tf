@@ -193,3 +193,26 @@ resource "helm_release" "metrics_server" {
     value = "--kubelet-insecure-tls"
   }
 }
+
+
+# Install NGINX Ingress Controller
+resource "helm_release" "nginx_ingress" {
+  depends_on = [module.eks]
+
+  name             = "nginx-ingress"
+  repository       = "https://kubernetes.github.io/ingress-nginx"
+  chart            = "ingress-nginx"
+  namespace        = "ingress-nginx"
+  create_namespace = true
+  version          = "4.13.0"
+
+  set {
+    name  = "controller.service.type"
+    value = "LoadBalancer"
+  }
+
+  set {
+    name  = "controller.service.annotations.service\\.beta\\.kubernetes\\.io/aws-load-balancer-type"
+    value = "nlb"
+  }
+}
