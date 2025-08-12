@@ -98,3 +98,29 @@ module "eks" {
     Terraform   = "true"
   }
 }
+
+
+# Update kubeconfig
+resource "null_resource" "kubectl" {
+  depends_on = [module.eks]
+  
+  provisioner "local-exec" {
+    command = "aws eks --region ${var.region} update-kubeconfig --name ${var.cluster_name}"
+  }
+}
+
+# Install Metrics Server
+resource "helm_release" "metrics_server" {
+  depends_on = [module.eks]
+  
+  name       = "metrics-server"
+  repository = "https://kubernetes-sigs.github.io/metrics-server/"
+  chart      = "metrics-server"
+  namespace  = "kube-system"
+  version    = "3.11.0"
+
+  set {
+    name  = "args[0]"
+    value = "--kubelet-insecure-tls"
+  }
+}
