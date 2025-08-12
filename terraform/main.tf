@@ -87,7 +87,8 @@ module "eks" {
       before_compute = true
     }
     aws-ebs-csi-driver = {
-      most_recent = true
+      most_recent              = true
+      service_account_role_arn = module.ebs_csi_irsa_role.iam_role_arn
     }
   }
 
@@ -99,11 +100,79 @@ module "eks" {
   }
 }
 
+# IAM role for EBS CSI Driver
+data "aws_iam_policy_document" "ebs_csi_policy" {
+  statement {
+    actions = [
+      "ec2:CreateSnapshot",
+      "ec2:AttachVolume",
+      "ec2:DetachVolume",
+      "ec2:ModifyVolume",
+      "ec2:DescribeAvailabilityZones",
+      "ec2:DescribeInstances",
+      "ec2:DescribeSnapshots",
+      "ec2:DescribeVolumes",
+      "ec2:DescribeVolumesModifications",
+      "ec2:DescribeVolumeStatus",
+      "ec2:DescribeVolumeAttribute",
+      "ec2:DescribeTags",
+      "ec2:CreateTags",
+      "ec2:DeleteTags",
+      "ec2:CreateVolume",
+      "ec2:DeleteVolume",
+      "ec2:DeleteSnapshot"
+    ]
+    resources = ["*"]
+  }
+
+  statement {
+    actions = [
+      "ec2:CreateSnapshot"
+    ]
+    resources = ["*"]
+    condition {
+      test     = "StringEquals"
+      variable = "ec2:CreateVolumePermission"
+      values   = ["true"]
+    }
+  }
+}
+
+resource "aws_iam_policy" "ebs_csi_policy" {
+  name        = "${var.cluster_name}-ebs-csi-policy"
+  description = "IAM policy for EBS CSI driver"
+  policy      = data.aws_iam_policy_document.ebs_csi_policy.json
+
+  tags = {
+    Environment = var.environment
+    Terraform   = "true"
+  }
+}
+
+# IRSA role for EBS CSI driver
+module "ebs_csi_irsa_role" {
+  source = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
+
+  role_name             = "${var.cluster_name}-ebs-csi-driver"
+  attach_ebs_csi_policy = true
+
+  oidc_providers = {
+    ex = {
+      provider_arn               = module.eks.oidc_provider_arn
+      namespace_service_accounts = ["kube-system:ebs-csi-controller-sa"]
+    }
+  }
+
+  tags = {
+    Environment = var.environment
+    Terraform   = "true"
+  }
+}
 
 # Update kubeconfig
 resource "null_resource" "kubectl" {
   depends_on = [module.eks]
-  
+
   provisioner "local-exec" {
     command = "aws eks --region ${var.region} update-kubeconfig --name ${var.cluster_name}"
   }
@@ -112,7 +181,7 @@ resource "null_resource" "kubectl" {
 # Install Metrics Server
 resource "helm_release" "metrics_server" {
   depends_on = [module.eks]
-  
+
   name       = "metrics-server"
   repository = "https://kubernetes-sigs.github.io/metrics-server/"
   chart      = "metrics-server"
