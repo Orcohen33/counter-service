@@ -14,8 +14,37 @@ spec:
     targetRevision: 22.0.1
     helm:
       releaseName: redis
-      valueFiles:
-        - ../../helm/redis/values.yaml
+      values: |
+        global:
+          defaultStorageClass: "gp2"
+        architecture: replication
+
+        master:
+          persistence:
+            enabled: true
+            size: 8Gi
+            storageClass: "gp2"
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "250m"
+
+        replica:
+          replicaCount: 2
+          persistence:
+            enabled: true
+            size: 8Gi
+            storageClass: "gp2"
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "250m"
 
   destination:
     server: https://kubernetes.default.svc
