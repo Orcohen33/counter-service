@@ -26,12 +26,13 @@ WORKDIR /app
 COPY --from=builder /root/.local /home/appuser/.local
 
 # Copy application code
-COPY --chown=appuser:appuser app.py .
+COPY --chown=appuser:appuser counter-service.py .
 
 # Switch to non-root user
 USER appuser
 
 # Add local bin to PATH
+ENV PATH=/home/appuser/.local/bin:$PATH
 ENV PATH=/home/appuser/.local/bin:$PATH
 
 # Health check
