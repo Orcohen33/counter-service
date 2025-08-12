@@ -41,4 +41,4 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
 EXPOSE 5000
 
 # Use gunicorn for production
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "4", "--threads", "2", "--worker-class", "gthread", "--log-level", "info", "app:app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "1", "--max-requests", "1000", "--max-requests-jitter", "100", "counter-service:app"]
