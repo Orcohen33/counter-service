@@ -38,3 +38,63 @@ module "vpc" {
     Terraform   = "true"
   }
 }
+
+# EKS Module
+module "eks" {
+  source  = "terraform-aws-modules/eks/aws"
+  version = "~> 21.0"
+
+  kubernetes_version = "1.32"
+  name               = var.cluster_name
+
+  vpc_id     = module.vpc.vpc_id
+  subnet_ids = module.vpc.private_subnets
+
+  endpoint_public_access                   = true
+  enable_cluster_creator_admin_permissions = true
+
+  # EKS Managed Node Group
+  eks_managed_node_groups = {
+    main = {
+      subnet_ids   = module.vpc.private_subnets
+      desired_size = var.node_group_desired_size
+      min_size     = var.node_group_min_size
+      max_size     = var.node_group_max_size
+
+      instance_types = [var.node_instance_type]
+
+      capacity_type = "ON_DEMAND"
+
+      update_config = {
+        max_unavailable_percentage = 33
+      }
+
+      tags = {
+        Environment = var.environment
+        Terraform   = "true"
+      }
+    }
+  }
+
+  # Enable IRSA
+  enable_irsa = true
+
+  # Add-ons
+  addons = {
+    coredns    = {}
+    kube-proxy = {}
+    vpc-cni = {
+      before_compute = true
+    }
+    aws-ebs-csi-driver = {
+      most_recent = true
+    }
+  }
+
+  # IAM Role for EKS
+
+  tags = {
+    Environment = var.environment
+    Terraform   = "true"
+  }
+}
