@@ -66,7 +66,7 @@ jobs:
             ${{ secrets.DOCKER_HUB_USERNAME }}/counter-service:latest
 
       - name: Update Kubernetes manifests
-        if: github.event_name != 'pull_request' # && github.ref == 'refs/heads/main'
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         run: |
           # Update the image tag in deployment.yaml
           sed -i "s|image: .*/counter-service:.*|image: ${{ secrets.DOCKER_HUB_USERNAME }}/counter-service:${{ github.sha }}|g" k8s/deployment.yaml
@@ -76,7 +76,7 @@ jobs:
           grep "image:" k8s/deployment.yaml
 
       - name: Commit and push manifest changes
-        if: github.event_name != 'pull_request' # && github.ref == 'refs/heads/main'
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
