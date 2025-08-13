@@ -44,7 +44,7 @@ module "eks" {
   source  = "terraform-aws-modules/eks/aws"
   version = "~> 21.0"
 
-  kubernetes_version = "1.32"
+  kubernetes_version = "1.33"
   name               = var.cluster_name
 
   vpc_id     = module.vpc.vpc_id
@@ -53,6 +53,9 @@ module "eks" {
   endpoint_public_access                   = true
   enable_cluster_creator_admin_permissions = true
 
+  upgrade_policy = {
+    support_type = "STANDARD" # This disables extended support
+  }
   # EKS Managed Node Group
   eks_managed_node_groups = {
     main = {
@@ -63,6 +66,7 @@ module "eks" {
 
       instance_types = [var.node_instance_type]
 
+      ami_type      = "AL2023_x86_64_STANDARD" # AL2 is not supported
       capacity_type = "ON_DEMAND"
 
       update_config = {
