@@ -1,12 +1,10 @@
 import os
-import json
 import logging
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 import redis
 from datetime import datetime
 import socket
-import time
 from redis.retry import Retry
 from redis.backoff import ExponentialBackoff
 
