@@ -16,14 +16,14 @@ spec:
       releaseName: redis
       values: |
         global:
-          defaultStorageClass: "ebs-gp3"
+          defaultStorageClass: "gp2"
         architecture: replication
 
         master:
           persistence:
             enabled: true
             size: 8Gi
-            storageClass: "ebs-gp3"
+            storageClass: "gp2"
           resources:
             requests:
               memory: "128Mi"
@@ -37,7 +37,7 @@ spec:
           persistence:
             enabled: true
             size: 8Gi
-            storageClass: "ebs-gp3"
+            storageClass: "gp2"
           resources:
             requests:
               memory: "128Mi"
