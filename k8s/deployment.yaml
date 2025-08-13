@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: counter-service
-          image: orcohen33/counter-service:0.1.0
+          image: orcohen33/counter-service:16b529bae8d56d13c7565183b216244481aafcbc
           ports:
             - containerPort: 5000
           env:
