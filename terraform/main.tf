@@ -104,7 +104,7 @@ module "eks" {
   }
 }
 
-# # IRSA role for EBS CSI driver
+# IRSA role for EBS CSI driver
 module "ebs_csi_irsa_role" {
   source = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
 
@@ -135,7 +135,7 @@ resource "null_resource" "kubectl" {
 
 
 resource "kubernetes_storage_class" "gp3_encrypted_default" {
-  depends_on = [module.eks]
+  depends_on = [module.eks, null_resource.kubectl]
 
   metadata {
     name = "gp3-encrypted"
