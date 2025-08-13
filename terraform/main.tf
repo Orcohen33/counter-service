@@ -104,56 +104,7 @@ module "eks" {
   }
 }
 
-# IAM role for EBS CSI Driver
-data "aws_iam_policy_document" "ebs_csi_policy" {
-  statement {
-    actions = [
-      "ec2:CreateSnapshot",
-      "ec2:AttachVolume",
-      "ec2:DetachVolume",
-      "ec2:ModifyVolume",
-      "ec2:DescribeAvailabilityZones",
-      "ec2:DescribeInstances",
-      "ec2:DescribeSnapshots",
-      "ec2:DescribeVolumes",
-      "ec2:DescribeVolumesModifications",
-      "ec2:DescribeVolumeStatus",
-      "ec2:DescribeVolumeAttribute",
-      "ec2:DescribeTags",
-      "ec2:CreateTags",
-      "ec2:DeleteTags",
-      "ec2:CreateVolume",
-      "ec2:DeleteVolume",
-      "ec2:DeleteSnapshot"
-    ]
-    resources = ["*"]
-  }
-
-  statement {
-    actions = [
-      "ec2:CreateSnapshot"
-    ]
-    resources = ["*"]
-    condition {
-      test     = "StringEquals"
-      variable = "ec2:CreateVolumePermission"
-      values   = ["true"]
-    }
-  }
-}
-
-resource "aws_iam_policy" "ebs_csi_policy" {
-  name        = "${var.cluster_name}-ebs-csi-policy"
-  description = "IAM policy for EBS CSI driver"
-  policy      = data.aws_iam_policy_document.ebs_csi_policy.json
-
-  tags = {
-    Environment = var.environment
-    Terraform   = "true"
-  }
-}
-
-# IRSA role for EBS CSI driver
+# # IRSA role for EBS CSI driver
 module "ebs_csi_irsa_role" {
   source = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
 
@@ -179,6 +130,29 @@ resource "null_resource" "kubectl" {
 
   provisioner "local-exec" {
     command = "aws eks --region ${var.region} update-kubeconfig --name ${var.cluster_name}"
+  }
+}
+
+
+resource "kubernetes_storage_class" "gp3_encrypted_default" {
+  depends_on = [module.eks]
+
+  metadata {
+    name = "gp3-encrypted"
+    annotations = {
+      "storageclass.kubernetes.io/is-default-class" = "true"
+    }
+  }
+
+  storage_provisioner    = "ebs.csi.aws.com"
+  reclaim_policy         = "Delete"
+  allow_volume_expansion = true
+  volume_binding_mode    = "WaitForFirstConsumer"
+
+  parameters = {
+    type      = "gp3"
+    fsType    = "ext4"
+    encrypted = "true"
   }
 }
 
